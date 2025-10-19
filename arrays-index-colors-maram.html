@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>مطابقة الألوان مع الفهارس — Arrays Index Match</title>
+  <style>
+    :root{
+      --bg:#0b1220;--panel:#0f172a;--muted:#9fb3c8;--ink:#eaf2ff;--accent:#4da3ff;--good:#16a34a;--bad:#ef4444;--warn:#f59e0b
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Noto Kufi Arabic","Noto Naskh Arabic",Tahoma,Arial,sans-serif;background:linear-gradient(180deg,#0b1220,#0e1526,#0b1220);color:var(--ink)}
+    .wrap{max-width:980px;margin:28px auto;padding:0 16px}
+    header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:16px}
+    h1{margin:0;font-size:clamp(20px,3.5vw,32px)}
+    .sub{color:var(--muted);font-size:14px}
+    .card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:16px}
+    .row{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;direction:ltr}
+    .swatch{border-radius:14px;min-height:72px;border:2px solid rgba(255,255,255,.12);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+    .idx{user-select:none;cursor:pointer;border-radius:14px;min-height:64px;border:2px dashed rgba(255,255,255,.2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:#0f172a;transition:.15s}
+    .idx:hover{transform:translateY(-2px);}
+    .idx .i{font-weight:700;opacity:.9}
+    .idx .hint{font-size:12px;color:var(--muted)}
+    .controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+    button{border:none;border-radius:10px;padding:10px 14px;font-weight:600;cursor:pointer}
+    .ghost{background:transparent;border:1px dashed rgba(255,255,255,.25);color:var(--muted)}
+    .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+    .tag{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.15);border-radius:999px;padding:6px 10px;background:#0f172a}
+    .dot{width:14px;height:14px;border-radius:50%}
+    .panel{background:#0b1426;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:10px;margin:12px 0}
+    .code{font-family:ui-monospace,Consolas,monospace;background:#0a1120;border:1px solid rgba(255,255,255,.1);padding:6px 8px;border-radius:8px;display:inline-block}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>تمرين: مطابقة لون <span class="code">index</span> مع عنصر المصفوفة</h1>
+        <div class="sub">اضغطي على كل فهرس (index) لتغيير لونه حتى يُطابق لون العنصر في نفس الموضع من المصفوفة.</div>
+      </div>
+      <div class="tag"><span class="dot" style="background:#4da3ff"></span>م. مرام الشمري</div>
+    </header>
+
+    <div class="card">
+      <div class="panel">
+        <div class="sub">تعريف المصفوفة (صياغة مستوحاة من PHP):</div>
+        <div class="code">$colors = array('red','blue','green','yellow','orange','pink');</div>
+      </div>
+
+      <h3 style="margin:8px 0 6px">عناصر المصفوفة (elements)</h3>
+      <div id="elements" class="row"></div>
+
+      <h3 style="margin:14px 0 6px">الفهارس (indices) — اضغطي لتغيير اللون</h3>
+      <div id="indices" class="row"></div>
+
+      <div class="controls">
+        <button id="resetBtn" class="ghost">تصفير</button>
+      </div>
+
+      <div class="legend" id="legend"></div>
+    </div>
+  </div>
+
+  <script>
+    const PALETTE = [
+      {name:'red',    hex:'#ff3b30'},
+      {name:'blue',   hex:'#007aff'},
+      {name:'green',  hex:'#34c759'},
+      {name:'yellow', hex:'#ffd60a'},
+      {name:'orange', hex:'#ff9500'},
+      {name:'pink',   hex:'#ff2d55'},
+    ];
+
+    // ترتيب الألوان مخلوط يدويًا
+    const COLORS = ['yellow','pink','blue','orange','red','green'];
+
+    const elElements = document.getElementById('elements');
+    const elIndices  = document.getElementById('indices');
+    const elLegend   = document.getElementById('legend');
+
+    COLORS.forEach((clr)=>{
+      const meta = PALETTE.find(p=>p.name===clr);
+      const card = document.createElement('div');
+      card.className = 'swatch';
+      card.style.background = meta.hex;
+      card.innerHTML = `<b>${clr}</b>`;
+      elElements.appendChild(card);
+    });
+
+    const idxState = Array(COLORS.length).fill(null);
+
+    function idxBox(idx){
+      const box = document.createElement('div');
+      box.className = 'idx';
+      box.setAttribute('data-i', idx);
+      box.style.background = '#0f172a';
+      box.innerHTML = `<div class="i">index ${idx}</div><div class="hint">اضغطي لتغيير اللون</div>`;
+      box.addEventListener('click', ()=>{
+        const cur = idxState[idx];
+        const nextIndex = (cur===null?0: (cur+1) % PALETTE.length);
+        idxState[idx] = nextIndex;
+        applyIdxColor(box, nextIndex);
+      });
+      return box;
+    }
+
+    function applyIdxColor(box, paletteIndex){
+      const meta = PALETTE[paletteIndex];
+      box.style.background = meta.hex;
+      box.style.borderColor = 'transparent';
+      box.querySelector('.hint').textContent = meta.name;
+    }
+
+    for(let i=0;i<COLORS.length;i++) elIndices.appendChild(idxBox(i));
+
+    PALETTE.forEach(p=>{
+      const tag = document.createElement('div');
+      tag.className='tag';
+      tag.innerHTML = `<span class="dot" style="background:${p.hex}"></span>${p.name}`;
+      elLegend.appendChild(tag);
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', ()=>{
+      for(let i=0;i<idxState.length;i++){ idxState[i]=null; }
+      document.querySelectorAll('.idx').forEach((box)=>{
+        box.style.background = '#0f172a';
+        box.style.borderColor = 'rgba(255,255,255,.2)';
+        box.querySelector('.hint').textContent = 'اضغطي لتغيير اللون';
+      });
+    });
+  </script>
+</body>
+</html>
